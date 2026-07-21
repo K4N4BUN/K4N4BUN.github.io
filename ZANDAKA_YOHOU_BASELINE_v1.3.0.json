@@ -1,0 +1,109 @@
+{
+  "product": "残高予報",
+  "release": "1.3.0",
+  "date": "2026-07-19",
+  "state_schema_version": 8,
+  "extension_schema": "v13.schema=1",
+  "storage_key": "zandaka-yohou-v1",
+  "service_worker_cache": "zandaka-yohou-v1-3-0",
+  "required_runtime_files": [
+    "index.html",
+    "manifest.json",
+    "sw.js",
+    "icon.svg",
+    "icon-192.png",
+    "icon-512.png",
+    "apple-touch-icon-180.png"
+  ],
+  "documentation_files": [
+    "README.txt",
+    "TEST_REPORT.txt",
+    "RELEASE_NOTES.txt",
+    "PRIVACY.txt"
+  ],
+  "maintenance_files": [
+    "ZANDAKA_YOHOU_MAINTENANCE_SPEC_v1.3.0.md",
+    "00_次回改修前に必ず読む_v1.3.0.txt",
+    "ZANDAKA_YOHOU_BASELINE_v1.3.0.json"
+  ],
+  "files": {
+    "index.html": {
+      "bytes": 216045,
+      "sha256": "bda08254ef715b907f94ad3465887e1e6feb54c012ff8d34f5e8d09abe82d22b"
+    },
+    "manifest.json": {
+      "bytes": 990,
+      "sha256": "949aa7be0f22fe3b3ad2f0c01abdfd687e2b389107f90b83af56b3ab709790e8"
+    },
+    "sw.js": {
+      "bytes": 1156,
+      "sha256": "fb475316895d3593d88aa1fee6c71b8bd204d339b8ccf9fb1292bba308eca295"
+    },
+    "icon.svg": {
+      "bytes": 388,
+      "sha256": "b69dac902178631ebde07504eb281e056c7c1bba49ea214667e573cb5b25cb40"
+    },
+    "icon-192.png": {
+      "bytes": 763,
+      "sha256": "f2816743e5e7b0a0ae26038d5bad38a8f6228dc6a8e4d78c7c05e13fc5ed689f"
+    },
+    "icon-512.png": {
+      "bytes": 2216,
+      "sha256": "348bc13570136acf2fc6c9fde3ac2668d82971f6a15086eed9ffba4522e9bd1a"
+    },
+    "apple-touch-icon-180.png": {
+      "bytes": 725,
+      "sha256": "da234e98597b7b5b0e12a92449cc293c0a591d64c4d7dd6409a29bacc5d708f9"
+    },
+    "README.txt": {
+      "bytes": 3516,
+      "sha256": "e446e1df256edc5ea2f0a9d80c065a4aa6da5755a2988143fefa8aef7b9d9c65"
+    },
+    "TEST_REPORT.txt": {
+      "bytes": 2067,
+      "sha256": "1d047f6499a1074cee96c5ca0f62195c732ceab4cccc366c81c551e1831d5433"
+    },
+    "RELEASE_NOTES.txt": {
+      "bytes": 2298,
+      "sha256": "c247bbec937301fbd91eca5828f8b004497034f821b4bbf9d2bea8d7811e3462"
+    },
+    "PRIVACY.txt": {
+      "bytes": 1480,
+      "sha256": "bfc32110ff8a09643d9ba4f9da4ab708a8816adb75a8fef7ed5332ecd5ffd5e3"
+    },
+    "ZANDAKA_YOHOU_MAINTENANCE_SPEC_v1.3.0.md": {
+      "bytes": 15894,
+      "sha256": "0811b3821055c5cefa230f77802a122ecb3c981d8d7b5ccdea99c8c951fd5e3f"
+    },
+    "00_次回改修前に必ず読む_v1.3.0.txt": {
+      "bytes": 807,
+      "sha256": "c4f8d4e2edb040876b0c581ca8a804cc6196c9e6c76e4f23c89905e70d8624f8"
+    }
+  },
+  "non_negotiable_invariants": [
+    "カード利用日に現金・銀行・電子マネーの保有残高を減らさない",
+    "カード引落を家計簿支出へ二重計上しない",
+    "銀行・財布・電子マネー間の移動を支出にしない",
+    "現金をUI上で口座と表記しない",
+    "後日収入を先取りしない",
+    "個別保有先不足を検出する",
+    "同日処理順と維持残高を守る",
+    "旧保存データを移行する"
+  ],
+  "test_summary": {
+    "fixed_browser": "PASS",
+    "core_regression": "PASS",
+    "random_card_dates": 2000,
+    "random_transfer_conservation": 1000,
+    "random_card_invariants": 1000,
+    "random_card_topup_invariants": 1000,
+    "random_split_identity": 1000
+  },
+  "known_unverified": [
+    "iPhone実機Safari",
+    "ホーム画面追加後のオフライン再起動",
+    "Android実機",
+    "VoiceOver正式監査",
+    "数万件長期性能"
+  ]
+}
