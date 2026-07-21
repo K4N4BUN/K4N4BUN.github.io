@@ -1,7 +1,0 @@
-{
-  "version": "0.8.0",
-  "releasedAt": "2026-07-19T17:15:00+09:00",
-  "requiresMigration": false,
-  "minimumDataSchema": 8,
-  "summary": "Cloudflare Pages本番配信、Capacitor iOS/Android、RevenueCat StoreKit/Play Billing、サーバー側Premium検証と無料プラン制限を追加。"
-}
