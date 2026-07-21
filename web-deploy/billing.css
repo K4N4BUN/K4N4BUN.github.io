@@ -1,0 +1,16 @@
+/* 残高予報 v1.6.0: RevenueCat / store billing UI */
+.zy-billing-card{border-color:color-mix(in srgb,var(--accent,#2563eb) 28%,var(--border,#d8dee8))}
+.zy-billing-head,.zy-billing-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.zy-billing-head h2,.zy-billing-head h3{margin:0}
+.zy-billing-section{margin-top:12px;padding-top:12px;border-top:1px solid var(--border,#d8dee8)}
+.zy-billing-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.zy-billing-kpi{padding:10px;border:1px solid var(--border,#d8dee8);border-radius:12px;background:var(--surface-2,#f7f8fa);font-size:.78rem}
+.zy-billing-kpi strong{display:block;margin-top:4px;font-size:.95rem;overflow-wrap:anywhere}
+.zy-package-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+.zy-package{padding:13px;border:1px solid var(--border,#d8dee8);border-radius:14px;background:var(--surface,#fff)}
+.zy-package h4{margin:0 0 5px}.zy-package-price{font-size:1.3rem;font-weight:800;margin:8px 0}
+.zy-feature-list{margin:8px 0 0;padding-left:1.2rem}.zy-feature-list li{margin:4px 0}
+.zy-billing-error{border:1px solid #dc2626;background:color-mix(in srgb,#dc2626 9%,transparent);padding:10px;border-radius:10px}
+.zy-billing-warning{border:1px solid #d97706;background:color-mix(in srgb,#d97706 9%,transparent);padding:10px;border-radius:10px}
+.zy-billing-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media(max-width:700px){.zy-billing-grid{grid-template-columns:1fr}.zy-billing-head,.zy-billing-row{align-items:stretch;flex-direction:column}.zy-billing-actions .btn{flex:1 1 150px}}
