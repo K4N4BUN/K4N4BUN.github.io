@@ -1,0 +1,150 @@
+name: Import inbox ZIP and deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'inbox/*.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-inbox-deploy
+  cancel-in-progress: false
+
+jobs:
+  import-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Find newest ZIP in inbox
+        id: zip
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_PATH="$(find inbox -maxdepth 1 -type f -name '*.zip' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -n 1 | cut -d' ' -f2- || true)"
+          if [ -z "$ZIP_PATH" ]; then
+            echo 'found=false' >> "$GITHUB_OUTPUT"
+            echo 'No ZIP remains in inbox; nothing to import.'
+            exit 0
+          fi
+          echo 'found=true' >> "$GITHUB_OUTPUT"
+          echo "path=$ZIP_PATH" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$ZIP_PATH")" >> "$GITHUB_OUTPUT"
+
+      - name: Validate and extract ZIP
+        if: steps.zip.outputs.found == 'true'
+        id: extract
+        shell: bash
+        env:
+          ZIP_PATH: ${{ steps.zip.outputs.path }}
+        run: |
+          set -euo pipefail
+          WORK_DIR="$RUNNER_TEMP/zandaka-inbox-import"
+          RAW_DIR="$WORK_DIR/raw"
+          FINAL_DIR="$WORK_DIR/final"
+          rm -rf "$WORK_DIR"
+          mkdir -p "$RAW_DIR" "$FINAL_DIR"
+
+          # Reject absolute paths and parent-directory traversal.
+          if zipinfo -1 "$ZIP_PATH" | grep -Eq '(^/|(^|/)\.\.(/|$))'; then
+            echo 'Unsafe path found in ZIP.'
+            exit 1
+          fi
+
+          unzip -q "$ZIP_PATH" -d "$RAW_DIR"
+
+          if find "$RAW_DIR" -type l -print -quit | grep -q .; then
+            echo 'Symbolic links are not allowed in the ZIP.'
+            exit 1
+          fi
+
+          shopt -s dotglob nullglob
+          ITEMS=("$RAW_DIR"/*)
+          if [ "${#ITEMS[@]}" -eq 1 ] && [ -d "${ITEMS[0]}" ]; then
+            SOURCE_DIR="${ITEMS[0]}"
+          else
+            SOURCE_DIR="$RAW_DIR"
+          fi
+
+          cp -a "$SOURCE_DIR"/. "$FINAL_DIR"/
+
+          if [ ! -f "$FINAL_DIR/index.html" ]; then
+            echo 'index.html was not found at the ZIP root.'
+            exit 1
+          fi
+
+          if find "$FINAL_DIR" -type d \( -name '.git' -o -name 'node_modules' \) -print -quit | grep -q .; then
+            echo 'ZIP contains a prohibited .git or node_modules directory.'
+            exit 1
+          fi
+
+          if find "$FINAL_DIR" -type f \( \
+              -name '.env' -o -name '.dev.vars' -o \
+              -name '*.pem' -o -name '*.p12' -o -name '*.pfx' -o \
+              -name '*.jks' -o -name '*.keystore' -o \
+              -name 'id_rsa' -o -name 'id_ed25519' \
+            \) -print -quit | grep -q .; then
+            echo 'ZIP may contain credentials or private keys.'
+            exit 1
+          fi
+
+          touch "$FINAL_DIR/.nojekyll"
+          echo "final_dir=$FINAL_DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Replace web-deploy directory
+        if: steps.zip.outputs.found == 'true'
+        shell: bash
+        env:
+          FINAL_DIR: ${{ steps.extract.outputs.final_dir }}
+        run: |
+          set -euo pipefail
+          rm -rf web-deploy
+          mkdir -p web-deploy
+          rsync -a --delete "$FINAL_DIR"/ web-deploy/
+          rm -f "${{ steps.zip.outputs.path }}"
+          rmdir inbox 2>/dev/null || true
+
+      - name: Commit imported deployment files
+        if: steps.zip.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A web-deploy inbox || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Deploy ${{ steps.zip.outputs.name }} [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Configure GitHub Pages
+        if: steps.zip.outputs.found == 'true'
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        if: steps.zip.outputs.found == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web-deploy
+
+      - name: Deploy GitHub Pages
+        if: steps.zip.outputs.found == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
