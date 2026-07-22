@@ -65,8 +65,6 @@
     .v142-log-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:9px 0;border-bottom:1px solid var(--line)}.v142-log-row:last-child{border-bottom:0}.v142-log-delta{font-weight:700;white-space:nowrap}.v142-log-detail{font-size:.74rem;color:var(--muted);margin-top:3px}.v142-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.v142-status-box{padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}.v142-status-box strong{display:block;margin-top:3px}.v142-checklist{display:grid;gap:7px}.v142-checklist label{display:flex;align-items:flex-start;gap:8px}.v142-checklist input{width:auto;margin-top:3px}.v142-reconcile-ok{color:var(--ok)}.v142-reconcile-diff{color:var(--danger)}.v142-profile-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.v142-profile-row:last-child{border-bottom:0}.v142-audit-account{display:flex;justify-content:space-between;gap:8px}.v142-test-pass{color:var(--ok)}.v142-test-fail{color:var(--danger)}
 </style>
   <link rel="stylesheet" href="./design-v080.css" />
-
-
   <script type="module" crossorigin src="./assets/app.js"></script>
 </head>
 <body>
@@ -262,7 +260,7 @@
         <article class="card"><h2>バックアップ</h2><p class="small">ブラウザデータ削除や端末変更に備え、月1回を推奨します。</p><div id="backupStatus" class="list-meta" style="margin:8px 0">—</div><div class="row-actions"><button class="btn btn-primary" id="exportBtn2" type="button">書き出す</button><button class="btn" id="importBtn2" type="button">復元する</button></div></article>
         <article class="card"><h2>アプリとして利用</h2><p class="small" id="installHelp">通常のSafariまたはChromeで開くと、ホーム画面へ追加できます。</p><button class="btn" id="installBtn" type="button" disabled>インストール</button></article>
         <article class="card"><h2>初期設定・デモ</h2><p class="small">初回設定をやり直すか、操作確認用データへ置き換えます。デモ読込前に現在データのバックアップを推奨します。</p><div class="row-actions"><button class="btn" id="setupBtn" type="button">初期設定を開く</button><button class="btn" id="demoBtn" type="button">デモデータ</button></div></article>
-        <article class="card"><h2>データとプライバシー</h2><p class="small" id="cloudPrivacyText">クラウド未設定・未ログイン時は、この端末のブラウザ保存領域だけを使用します。銀行・カード会社への直接接続はありません。</p><p class="small"><strong>バージョン:</strong> 0.8.0<br><strong>端末保存:</strong> localStorage＋JSONバックアップ<br><strong>任意クラウド:</strong> Supabase Auth＋PostgreSQL<br><strong>ストア課金:</strong> RevenueCat＋Apple/Google Billing<br><strong>計算方式:</strong> 入力条件に基づく将来残高試算</p></article>
+        <article class="card"><h2>データとプライバシー</h2><p class="small" id="cloudPrivacyText">クラウド未設定・未ログイン時は、この端末のブラウザ保存領域だけを使用します。銀行・カード会社への直接接続はありません。</p><p class="small"><strong>バージョン:</strong> 0.8.2<br><strong>端末保存:</strong> localStorage＋JSONバックアップ<br><strong>任意クラウド:</strong> Supabase Auth＋PostgreSQL<br><strong>ストア課金:</strong> RevenueCat＋Apple/Google Billing<br><strong>計算方式:</strong> 入力条件に基づく将来残高試算</p></article>
         <article class="card"><h2>計算仕様</h2><details><summary>安全使用額</summary><p class="small">選択した通常使用口座から直ちに支出しても、次回入金直前までその口座が維持残高を下回らない最大額です。他口座の不足は別途警告します。</p></details><details><summary>同日順序</summary><p class="small">安全側に倒し、外部支出、振替出、振替入、外部収入の順で処理します。同日振替で引落を賄う設定には警告します。</p></details><details><summary>リボ・ローン</summary><p class="small">入力した元本、年率、日数基準、丸め、返済方式、遅延条件による日割り単利試算です。契約固有の処理は規約と照合してください。</p></details></article>
       </aside>
     </div>
@@ -280,7 +278,7 @@
 
 <script>
 "use strict";
-const APP_VERSION = "0.8.0",
+const APP_VERSION = "0.8.2",
   STORAGE_KEY = "zandaka-yohou-v1",
   LEGACY_KEYS = [
     "zandaka-yohou-html-v5",
@@ -3346,6 +3344,52 @@ document.addEventListener("change",e=>{const id=e.target.dataset?.v142Device;if(
 ensureV142();
 /* ===== end v1.4.2 extension ===== */
 
+/* ===== v0.8.2 transaction validation and duplicate prevention ===== */
+function zyNormalizeLedgerName(value){return String(value||"").normalize("NFKC").toLowerCase().replace(/[\s\u3000・･,，.。\-ー_\/\\()（）\[\]【】]/g,"");}
+function zyDateDistanceDays(a,b){if(!isValidISODate(a)||!isValidISODate(b))return Infinity;return Math.abs(Math.round((parseISODate(a)-parseISODate(b))/86400000));}
+function zyLedgerSourceKey(entry){const meta=entryV13(entry);return meta.paymentMethod==="credit"?`card:${meta.cardId||""}`:`account:${entry.accountId||""}`;}
+function detectLedgerDuplicates(candidate,excludeId=""){
+  const normalized=zyNormalizeLedgerName(candidate.name),source=zyLedgerSourceKey(candidate);
+  return state.ledgerEntries.filter(x=>x.id!==excludeId&&isEntryActive(x)&&x.kind===candidate.kind&&intMoney(x.amount)===intMoney(candidate.amount)&&zyDateDistanceDays(x.date,candidate.date)<=1&&zyLedgerSourceKey(x)===source).map(x=>{
+    const xn=zyNormalizeLedgerName(x.name),sameName=normalized&&xn===normalized,similarName=normalized&&xn&&(normalized.includes(xn)||xn.includes(normalized));
+    return {...x,duplicateScore:(sameName?3:similarName?2:0)+(x.date===candidate.date?2:1)};
+  }).filter(x=>x.duplicateScore>=3).sort((a,b)=>b.duplicateScore-a.duplicateScore);
+}
+function zyValidateLedgerDraft(){
+  const amount=Math.max(0,intMoney(document.getElementById("ledgerAmount")?.value)),name=String(document.getElementById("ledgerName")?.value||"").trim(),date=document.getElementById("ledgerDate")?.value||"",kind=document.getElementById("ledgerKind")?.value||"expense",pm=document.getElementById("ledgerPayment")?.value||"debit",source=document.getElementById("ledgerSource")?.value||"";
+  const errors=[];
+  if(amount<=0)errors.push("金額は1円以上で入力してください。");
+  if(!name)errors.push("内容・店名を入力してください。");
+  if(!isValidISODate(date))errors.push("正しい日付を入力してください。");
+  if(!["expense","income","settlement"].includes(kind))errors.push("取引区分が不正です。");
+  if(pm==="credit"&&!cardById(source))errors.push("支払元カードを選択してください。");
+  if(pm!=="credit"&&!state.accounts.some(a=>a.id===source&&a.active!==false))errors.push("有効な支払元口座を選択してください。");
+  return{errors,amount,name,date,kind,pm,source};
+}
+const openLedgerModalV082=openLedgerModal;
+openLedgerModal=function(entryId="",kind="expense",forcePayment=""){
+  openLedgerModalV082(entryId,kind,forcePayment);
+  const btn=document.getElementById("ledgerSave"),old=btn?.onclick;
+  if(!btn||!old)return;
+  const note=document.createElement("div");note.id="zyLedgerQualityNote";note.className="inline-note";note.style.marginTop="10px";note.textContent="金額・日付・内容・支払元を検証し、重複候補がある場合は保存前に確認します。";btn.before(note);
+  btn.onclick=()=>{
+    const draft=zyValidateLedgerDraft();
+    if(draft.errors.length){note.className="alert danger";note.innerHTML=draft.errors.map(esc).join("<br>");return;}
+    const basePm=Object.prototype.hasOwnProperty.call(HOUSEHOLD_PAYMENT_METHODS,draft.pm)?draft.pm:"other";
+    const candidate=sanitizeLedgerEntry({id:entryId||"preview",kind:draft.kind,amount:draft.amount,date:draft.date,name:draft.name,category:document.getElementById("ledgerCategory")?.value||"その他",paymentMethod:basePm,accountId:draft.pm==="credit"?(cardById(draft.source)?.accountId||state.defaultAccountId):draft.source,affectsBalance:draft.pm!=="credit"&&Boolean(document.getElementById("ledgerAffects")?.checked),note:document.getElementById("ledgerNote")?.value||""});
+    ensureV13().entryMeta[candidate.id]={paymentMethod:draft.pm,cardId:draft.pm==="credit"?draft.source:""};
+    const hits=detectLedgerDuplicates(candidate,entryId);
+    delete ensureV13().entryMeta[candidate.id];
+    if(hits.length){
+      const details=hits.slice(0,3).map(x=>`${x.date} ${x.name} ${yen.format(x.amount)}`).join("\n");
+      if(!confirm(`重複の可能性がある取引が${hits.length}件あります。\n\n${details}\n\nそれでも保存しますか？`))return;
+    }
+    note.className="inline-note";note.textContent="検証済み。保存します。";
+    old();
+  };
+};
+/* ===== end v0.8.2 extension ===== */
+
 
 window.__ZY_TEST__ = {
   APP_VERSION,
@@ -3382,6 +3426,7 @@ window.__ZY_TEST__ = {
   getV14: () => deepClone(ensureV14()),
   diagnostics, matchSuggestions, parseCsv, subscriptionEvents, scenarioForecast, refundTotals,
   getV142: () => deepClone(ensureV142()), v142MigrationFixtureTests, v142RawCardGroup, v142FinancialSnapshot,
+  detectLedgerDuplicates, zyValidateLedgerDraft,
 };
 if (location.hash === "#selftest") {
   const r = runSelfTests();

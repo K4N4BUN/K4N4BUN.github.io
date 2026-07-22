@@ -1,7 +1,8 @@
 {
-  "version": "0.8.0",
-  "releasedAt": "2026-07-19T17:15:00+09:00",
+  "version": "0.8.2",
+  "releasedAt": "2026-07-22",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "Cloudflare Pages本番配信、Capacitor iOS/Android、RevenueCat StoreKit/Play Billing、サーバー側Premium検証と無料プラン制限を追加。"
+  "summary": "取引入力の必須検証と重複登録防止を追加。",
+  "notes": "金額・日付・内容・支払元を保存前に検証し、同額・近接日・同一支払元・類似名称の重複候補を警告。"
 }

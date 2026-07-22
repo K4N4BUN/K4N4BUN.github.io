@@ -23,10 +23,8 @@
     root.insertBefore(quick,root.querySelector('.metrics'));
     const explain=document.createElement('article');explain.className='card';explain.innerHTML='<div class="section-head"><div><h2>予報の内訳</h2><p class="small">現在残高から最低残高までの主要な増減要因です。</p></div></div><div id="zyForecastExplanation" class="list"></div>';
     root.querySelector('.two-col>div.grid')?.insertBefore(explain,root.querySelector('.two-col>div.grid')?.children[2]||null);
-    let lastForecastExplanation="";
-    const update=()=>{const el=$('#zyForecastExplanation');if(!el)return;const values=[['現在の保有残高',$('#assetTotal')?.textContent],['今すぐ使える金額',$('#safeNow')?.textContent],['予測期間の最低残高',$('#lowestBalance')?.textContent],['今月の支出',$('#householdExpense')?.textContent],['今月の収入',$('#householdIncome')?.textContent]];const next=values.map(([a,b])=>`<div class="list-row"><span>${a}</span><strong>${b||'—'}</strong></div>`).join('');if(next!==lastForecastExplanation){lastForecastExplanation=next;el.innerHTML=next;}};
-    const observer=new MutationObserver(records=>{if(records.every(r=>r.target.closest?.('#zyForecastExplanation')))return;update();});
-    observer.observe(document.body,{subtree:true,childList:true,characterData:true});update();
+    const update=()=>{const el=$('#zyForecastExplanation');if(!el)return;const values=[['現在の保有残高',$('#assetTotal')?.textContent],['今すぐ使える金額',$('#safeNow')?.textContent],['予測期間の最低残高',$('#lowestBalance')?.textContent],['今月の支出',$('#householdExpense')?.textContent],['今月の収入',$('#householdIncome')?.textContent]];el.innerHTML=values.map(([a,b])=>`<div class="list-row"><span>${a}</span><strong>${b||'—'}</strong></div>`).join('')};
+    new MutationObserver(update).observe(document.body,{subtree:true,childList:true,characterData:true});update();
   }
   function upgradeTransactions(){
     const root=$('#view-household');if(!root||root.dataset.upgraded)return;root.dataset.upgraded='1';
