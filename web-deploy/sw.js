@@ -1,8 +1,8 @@
 "use strict";
-const CACHE_NAME="zandaka-yohou-v0-8-5";
+const CACHE_NAME="zandaka-yohou-v0-8-6";
 const APP_SHELL=[
   "./","./index.html","./manifest.json","./version.json",
-  "./features.css","./src/features.js","./src/core/analytics.js","./src/core/crypto.js","./src/native/security.js","./src/native/notifications.js","./cloud.css","./cloud-config.js","./cloud.js","./billing.css","./billing-config.js","./legal.css",
+  "./styles/app.css","./styles/ui-enhancements.css","./scripts/app.js","./scripts/ui-enhancements.js","./features.css","./src/features.js","./src/core/analytics.js","./src/core/crypto.js","./src/native/security.js","./src/native/notifications.js","./cloud.css","./cloud-config.js","./cloud.js","./billing.css","./billing-config.js","./legal.css",
   "./assets/app.js","./assets/web.js",
   "./privacy.html","./terms.html","./delete-account.html",
   "./icon.svg","./icon-192.png","./icon-512.png","./apple-touch-icon-180.png"

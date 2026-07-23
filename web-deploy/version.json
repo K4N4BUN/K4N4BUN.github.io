@@ -1,8 +1,8 @@
 {
-  "version": "0.8.5",
+  "version": "0.8.6",
   "releasedAt": "2026-07-23",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "PWA起動時のreadonly代入エラーを修正。",
-  "notes": "design-v080.jsでconst宣言した更新関数へ再代入していた処理を廃止し、単一の安全な更新関数へ統合。"
+  "summary": "巨大なindex.htmlからCSSとJavaScriptを分離し、UI拡張資産の固定バージョン名を廃止。",
+  "notes": "第1段階の構造リファクタリング。機能・保存データ形式は維持。"
 }
