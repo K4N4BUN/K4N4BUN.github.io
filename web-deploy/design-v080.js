@@ -23,12 +23,10 @@
     root.insertBefore(quick,root.querySelector('.metrics'));
     const explain=document.createElement('article');explain.className='card';explain.innerHTML='<div class="section-head"><div><h2>予報の内訳</h2><p class="small">現在残高から最低残高までの主要な増減要因です。</p></div></div><div id="zyForecastExplanation" class="list"></div>';
     root.querySelector('.two-col>div.grid')?.insertBefore(explain,root.querySelector('.two-col>div.grid')?.children[2]||null);
-    const update=()=>{const el=$('#zyForecastExplanation');if(!el)return;const values=[['現在の保有残高',$('#assetTotal')?.textContent],['今すぐ使える金額',$('#safeNow')?.textContent],['予測期間の最低残高',$('#lowestBalance')?.textContent],['今月の支出',$('#householdExpense')?.textContent],['今月の収入',$('#householdIncome')?.textContent]];el.innerHTML=values.map(([a,b])=>`<div class="list-row"><span>${a}</span><strong>${b||'—'}</strong></div>`).join('')};
     const watched=['#assetTotal','#safeNow','#lowestBalance','#householdExpense','#householdIncome'].map(s=>$(s)).filter(Boolean);
     let queued=false,last='';
+    const update=()=>{const el=$('#zyForecastExplanation');if(!el)return;const values=[['現在の保有残高',$('#assetTotal')?.textContent],['今すぐ使える金額',$('#safeNow')?.textContent],['予測期間の最低残高',$('#lowestBalance')?.textContent],['今月の支出',$('#householdExpense')?.textContent],['今月の収入',$('#householdIncome')?.textContent]];const html=values.map(([a,b])=>`<div class="list-row"><span>${a}</span><strong>${b||'—'}</strong></div>`).join('');if(html!==last){last=html;el.innerHTML=html}};
     const scheduleUpdate=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;update()})};
-    const safeUpdate=()=>{const el=$('#zyForecastExplanation');if(!el)return;const values=[['現在の保有残高',$('#assetTotal')?.textContent],['今すぐ使える金額',$('#safeNow')?.textContent],['予測期間の最低残高',$('#lowestBalance')?.textContent],['今月の支出',$('#householdExpense')?.textContent],['今月の収入',$('#householdIncome')?.textContent]];const html=values.map(([a,b])=>`<div class="list-row"><span>${a}</span><strong>${b||'—'}</strong></div>`).join('');if(html!==last){last=html;el.innerHTML=html}};
-    update=safeUpdate;
     const observer=new MutationObserver(scheduleUpdate);
     watched.forEach(el=>observer.observe(el,{subtree:true,childList:true,characterData:true}));
     update();
@@ -95,6 +93,6 @@
   }
   function upgradeQuickSheet(){const s=$('#quickSheet .quick-sheet-panel');if(!s)return;s.querySelector('h2').textContent='追加';const close=s.querySelector('.close-sheet');[['予定','zy-add-plan'],['レシート','zy-receipt'],['音声入力','zy-voice']].forEach(([l,a])=>{const b=document.createElement('button');b.className='btn';b.type='button';b.dataset.action=a;b.textContent=l;s.insertBefore(b,close)})}
   document.addEventListener('click',e=>{const a=e.target.closest('[data-action]')?.dataset.action;if(a==='zy-add-plan'){e.preventDefault();addPlan()}if(a==='zy-receipt'){e.preventDefault();receipt()}if(a==='zy-voice'){e.preventDefault();voice()}},true);
-  async function init(){await wait();upgradeTabs();upgradeHome();upgradeTransactions();upgradeCalendar();upgradeAssets();upgradeSettings();upgradeQuickSheet();document.body.dataset.designVersion='0.8.4'}
+  async function init(){await wait();upgradeTabs();upgradeHome();upgradeTransactions();upgradeCalendar();upgradeAssets();upgradeSettings();upgradeQuickSheet();document.body.dataset.designVersion='0.8.5'}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

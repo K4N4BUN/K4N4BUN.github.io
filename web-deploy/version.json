@@ -1,8 +1,8 @@
 {
-  "version": "0.8.4",
+  "version": "0.8.5",
   "releasedAt": "2026-07-23",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "PWA初回設定画面の操作不能を引き起こすMutationObserver自己誘発ループを修正。",
-  "notes": "監視対象を残高表示要素に限定し、requestAnimationFrameで集約、同一HTMLの再書込みを抑止。初回選択には委譲イベントの予備経路も追加。"
+  "summary": "PWA起動時のreadonly代入エラーを修正。",
+  "notes": "design-v080.jsでconst宣言した更新関数へ再代入していた処理を廃止し、単一の安全な更新関数へ統合。"
 }
