@@ -1,8 +1,8 @@
 {
-  "version": "0.8.3",
-  "releasedAt": "2026-07-22",
+  "version": "0.8.4",
+  "releasedAt": "2026-07-23",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "表示バージョン不整合を修正し、実装報告へ残りの改善予定を追加。",
-  "notes": "設定画面、フッター、更新状態、クラウド識別、デザイン識別、Web/Android/iOSの表示を0.8.3へ統一。"
+  "summary": "PWA初回設定画面の操作不能を引き起こすMutationObserver自己誘発ループを修正。",
+  "notes": "監視対象を残高表示要素に限定し、requestAnimationFrameで集約、同一HTMLの再書込みを抑止。初回選択には委譲イベントの予備経路も追加。"
 }
