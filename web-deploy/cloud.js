@@ -33,7 +33,7 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
   })[c]);
   const nowIso = () => new Date().toISOString();
-  const appVersion = () => window.__ZY_TEST__?.APP_VERSION || "0.8.7";
+  const appVersion = () => window.__ZY_TEST__?.APP_VERSION || "0.8.8";
   const getState = () => window.__ZY_TEST__?.getState?.() || {};
   const setState = (value) => window.__ZY_TEST__?.setState?.(value);
   const toast = (message) => window.showToast ? window.showToast(message) : console.info(message);

@@ -1,6 +1,11 @@
 "use strict";
-const APP_VERSION = "0.8.7",
+const APP_VERSION = "0.8.8",
   STORAGE_KEY = "zandaka-yohou-v1",
+  RECOVERY_KEYS = [
+    "zandaka-yohou-recovery-update",
+    "zandaka-yohou-recovery-current",
+    "zandaka-yohou-recovery-previous",
+  ],
   LEGACY_KEYS = [
     "zandaka-yohou-html-v5",
     "zandaka-yohou-mvp-v4",
@@ -8,6 +13,8 @@ const APP_VERSION = "0.8.7",
     "zandaka-yohou-mvp-v1",
   ];
 let storageAvailable = true;
+let automaticSaveBlocked = false;
+let stateLoadStatus = { source: "empty", recovered: false, error: "" };
 const memoryStorage = new Map();
 const {
   deepClone, yen, dateFmt, fullDateFmt, uid, toISODate, todayISO,
@@ -472,18 +479,63 @@ function ensureWizardSeed() {
   state.recurring = seed.recurring;
   state.defaultAccountId = seed.defaultAccountId;
 }
+function parseStoredState(text, source) {
+  if (!text) return null;
+  const raw = JSON.parse(text);
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`${source}: 保存形式が不正です`);
+  return isUntouchedLegacyTemplate(raw) ? blankInitialState() : sanitizeState(raw);
+}
 function loadState() {
-  try {
-    const saved = storageGet(STORAGE_KEY);
-    if (saved) { const raw=JSON.parse(saved); return isUntouchedLegacyTemplate(raw) ? blankInitialState() : sanitizeState(raw); }
-    for (const key of LEGACY_KEYS) {
-      const old = storageGet(key);
-      if (old) { const raw=JSON.parse(old); return isUntouchedLegacyTemplate(raw) ? blankInitialState() : sanitizeState(raw); }
+  const candidates = [
+    [STORAGE_KEY, "primary"],
+    ...RECOVERY_KEYS.map((key, index) => [key, `recovery-${index + 1}`]),
+    ...LEGACY_KEYS.map((key) => [key, `legacy:${key}`]),
+  ];
+  const errors = [];
+  for (const [key, source] of candidates) {
+    const text = storageGet(key);
+    if (!text) continue;
+    try {
+      const loaded = parseStoredState(text, source);
+      stateLoadStatus = { source, recovered: source !== "primary", error: errors.join(" / ") };
+      if (source !== "primary") {
+        storageSet(STORAGE_KEY, JSON.stringify(loaded));
+      }
+      return loaded;
+    } catch (error) {
+      console.error(`保存データの読込失敗: ${source}`, error);
+      errors.push(`${source}: ${error?.message || error}`);
     }
-    return blankInitialState();
-  } catch (e) {
-    console.error("保存データの読込失敗", e);
-    return blankInitialState();
+  }
+  if (errors.length) {
+    automaticSaveBlocked = true;
+    stateLoadStatus = { source: "failed", recovered: false, error: errors.join(" / ") };
+  } else {
+    stateLoadStatus = { source: "empty", recovered: false, error: "" };
+  }
+  return blankInitialState();
+}
+function rotateRecoveryCopies(nextJson) {
+  const current = storageGet(STORAGE_KEY);
+  if (!current || current === nextJson) return;
+  try {
+    JSON.parse(current);
+  } catch {
+    return;
+  }
+  const previousRecovery = storageGet(RECOVERY_KEYS[1]);
+  if (previousRecovery) storageSet(RECOVERY_KEYS[2], previousRecovery);
+  storageSet(RECOVERY_KEYS[1], current);
+}
+function createUpdateRecoveryPoint(label = "update") {
+  try {
+    const json = JSON.stringify(state);
+    JSON.parse(json);
+    storageSet(RECOVERY_KEYS[0], json);
+    return true;
+  } catch (error) {
+    console.error(`更新前復元点の作成失敗: ${label}`, error);
+    return false;
   }
 }
 function setSaveStatus(ok = true) {
@@ -496,8 +548,23 @@ function setSaveStatus(ok = true) {
     : "保存失敗";
   el.className = `pill ${ok ? (storageAvailable ? "ok" : "warn") : "danger"}`;
 }
-function saveState() {
-  const json = JSON.stringify(state);
+function saveState(options = {}) {
+  if (automaticSaveBlocked && options.force !== true) {
+    setSaveStatus(false);
+    const el = document.getElementById("saveStatus");
+    if (el) el.textContent = "読込異常・上書き停止";
+    return false;
+  }
+  let json;
+  try {
+    json = JSON.stringify(state);
+    JSON.parse(json);
+  } catch (error) {
+    console.error("保存データの直列化失敗", error);
+    setSaveStatus(false);
+    return false;
+  }
+  rotateRecoveryCopies(json);
   const persisted = storageSet(STORAGE_KEY, json);
   setSaveStatus(persisted || !storageAvailable);
   try {
@@ -2718,7 +2785,7 @@ function calendarDayData(date){const actual=state.ledgerEntries.filter(e=>e.date
 function renderCalendarDayDetail(){const el=document.getElementById("v14CalendarDayDetail"),date=ensureV14().selectedCalendarDate;if(!el||!date)return;const d=calendarDayData(date),rows=[...d.actual.map(e=>({name:e.name,amount:e.kind==="income"?e.amount:-e.amount,type:"実績"})),...d.events.map(e=>({name:e.name,amount:e.amount,type:"予定"}))];el.innerHTML=`<h3>${date}</h3><div class="v14-kpi-grid"><div class="v14-kpi">実績支出<strong>${yen.format(d.expense)}</strong></div><div class="v14-kpi">実績収入<strong>${yen.format(d.income)}</strong></div><div class="v14-kpi">予定差引<strong>${yen.format(d.planned)}</strong></div></div><div class="v14-day-modal-list">${rows.length?rows.map(r=>`<div class="v14-day-modal-row"><span>${r.type}・${esc(r.name)}</span><strong class="${r.amount<0?"negative":"positive"}">${r.amount>=0?"＋":"－"}${yen.format(Math.abs(r.amount))}</strong></div>`).join(""):"<p class='small'>取引はありません。</p>"}</div>`;}
 const renderCalendarV13ForV14=renderCalendar;renderCalendar=function(){renderCalendarV13ForV14();const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth(),start=new Date(y,m,1),gridStart=addDays(start,-start.getDay()),days=[...document.querySelectorAll("#calendarGrid .day")];days.forEach((el,i)=>{const d=addDays(gridStart,i),date=toISODate(d),x=calendarDayData(date);el.dataset.date=date;const summary=document.createElement("div");summary.className="v14-calendar-total";summary.innerHTML=`${x.expense?`<span class="negative">実績 -${yen.format(x.expense)}</span><br>`:""}${x.planned?`予定 ${x.planned>=0?"+":"-"}${yen.format(Math.abs(x.planned))}`:""}`;el.appendChild(summary);el.tabIndex=0;el.setAttribute("role","button");el.onclick=()=>{ensureV14().selectedCalendarDate=date;renderCalendarDayDetail();};el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();el.click();}};});renderCalendarDayDetail();};
 
-function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.8.7・更新未検出";}
+function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.8.8・更新未検出";}
 const renderSettingsV13ForV14=renderSettings;renderSettings=function(){renderSettingsV13ForV14();renderV14Settings();};
 
 /* ledger modal: subcategory + sale date + closed month protection + undo */
@@ -2802,6 +2869,7 @@ function showUpdateBanner(targetVersion=v14TargetVersion){
     button.disabled=true;
     button.textContent="更新準備中…";
     createSnapshot(`PWA ${targetVersion||"新版"} 更新前`);
+    createUpdateRecoveryPoint(`PWA ${targetVersion||"新版"}`);
     saveState();
     v14UpdateRequested=true;
     const reg=await navigator.serviceWorker.getRegistration();
@@ -2998,7 +3066,14 @@ if (location.hash === "#selftest") {
 bindChartInteraction();
 (async function bootstrapApp(){
   await restoreAndroidNativeBackupIfNeeded();
+  try { await navigator.storage?.persist?.(); } catch {}
   setView(state.activeView || "household");
   render();
+  if (stateLoadStatus.recovered) {
+    showToast("保存データを復元コピーから回復しました");
+  } else if (automaticSaveBlocked) {
+    showFatal(new Error("保存データを読み込めなかったため、空データでの上書きを停止しました。バックアップまたは復元コピーを確認してください。"));
+    return;
+  }
   if (!state.setupComplete) openWizard(true);
 })();
