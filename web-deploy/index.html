@@ -17,8 +17,7 @@
   <link rel="stylesheet" href="./billing.css" />
   <link rel="stylesheet" href="./features.css" />
   <link rel="stylesheet" href="./styles/app.css">
-  <link rel="stylesheet" href="./styles/ui-enhancements.css" />
-  <script type="module" crossorigin src="./assets/app.js"></script>
+  <link rel="stylesheet" href="./design-v080.css" />
 </head>
 <body>
 <noscript><div class="alert danger" style="margin:16px">このアプリにはJavaScriptが必要です。SafariまたはChromeの通常ページとして開いてください。</div></noscript>
@@ -206,20 +205,20 @@
         <article class="card"><div class="section-head"><div><h2>月間締め</h2><p class="small">残高、カード請求、未確認取引、バックアップを確認して月を締めます。</p></div></div><div id="v14MonthCloseStatus" class="small">—</div><div class="row-actions" style="margin-top:8px"><button class="btn btn-primary" data-action="v14-close-month" type="button">選択月を締める</button><button class="btn" data-action="v14-reopen-month" type="button">締めを解除</button></div></article>
         <article class="card"><div class="section-head"><div><h2>ホーム表示項目</h2><p class="small">よく見る数字だけを残せます。</p></div></div><div id="v14DashboardSettings"></div></article>
         <article class="card v14-encrypted"><div class="section-head"><div><h2>暗号化バックアップ</h2><p class="small">AES-GCMで暗号化します。パスフレーズを忘れると復元できません。</p></div></div><div class="form-grid"><label>パスフレーズ<input id="v14BackupPass" type="password" autocomplete="new-password"/></label><label>確認<input id="v14BackupPass2" type="password" autocomplete="new-password"/></label></div><div class="row-actions" style="margin-top:8px"><button class="btn btn-primary" data-action="v14-export-encrypted" type="button">暗号化して書き出す</button><button class="btn" data-action="v14-import-encrypted" type="button">暗号化ファイルを復元</button></div><input id="v14EncryptedFile" class="hidden" type="file" accept=".zyenc,application/json"/></article>
-        <article class="card"><div class="section-head"><div><h2>アプリ更新</h2><p class="small">更新前スナップショットを作成し、Service Workerの更新を確認します。</p></div></div><div id="v14UpdateStatus" class="small">現在のバージョン 0.8.6</div><button class="btn" data-action="v14-check-update" type="button" style="margin-top:8px">更新を確認</button></article>
+        <article class="card"><div class="section-head"><div><h2>アプリ更新</h2><p class="small">更新前スナップショットを作成し、Service Workerの更新を確認します。</p></div></div><div id="v14UpdateStatus" class="small">現在のバージョン 0.8.7</div><button class="btn" data-action="v14-check-update" type="button" style="margin-top:8px">更新を確認</button></article>
         <article class="card"><div class="section-head"><div><h2>自動スナップショット</h2><p class="small">今日、前回起動時、更新前など最大4世代を端末内に保持します。</p></div><button class="btn btn-small" data-action="create-snapshot" type="button">今保存</button></div><div id="snapshotList" class="snapshot-list"></div></article>
         <article class="card"><h2>年度アーカイブ</h2><p class="small">古い年度を書き出してから端末内の履歴を削除できます。</p><div class="form-grid"><label>対象年<input id="archiveYear" type="number" min="2000" max="2100" /></label><label>操作<select id="archiveMode"><option value="export">書き出すだけ</option><option value="remove">書き出して削除</option></select></label></div><button class="btn" data-action="archive-year" type="button" style="margin-top:10px">実行</button></article>
         <article class="card"><h2>表示・アクセシビリティ</h2><label><input id="largeTextMode" type="checkbox" style="width:auto;display:inline;margin-right:6px" />文字を大きくする</label><p class="small">OSのダークモード、キーボード操作、画面読み上げ用ラベルにも対応します。</p></article>
         <article class="card"><h2>バックアップ</h2><p class="small">ブラウザデータ削除や端末変更に備え、月1回を推奨します。</p><div id="backupStatus" class="list-meta" style="margin:8px 0">—</div><div class="row-actions"><button class="btn btn-primary" id="exportBtn2" type="button">書き出す</button><button class="btn" id="importBtn2" type="button">復元する</button></div></article>
         <article class="card"><h2>アプリとして利用</h2><p class="small" id="installHelp">通常のSafariまたはChromeで開くと、ホーム画面へ追加できます。</p><button class="btn" id="installBtn" type="button" disabled>インストール</button></article>
         <article class="card"><h2>初期設定・デモ</h2><p class="small">初回設定をやり直すか、操作確認用データへ置き換えます。デモ読込前に現在データのバックアップを推奨します。</p><div class="row-actions"><button class="btn" id="setupBtn" type="button">初期設定を開く</button><button class="btn" id="demoBtn" type="button">デモデータ</button></div></article>
-        <article class="card"><h2>データとプライバシー</h2><p class="small" id="cloudPrivacyText">クラウド未設定・未ログイン時は、この端末のブラウザ保存領域だけを使用します。銀行・カード会社への直接接続はありません。</p><p class="small"><strong>バージョン:</strong> 0.8.6<br><strong>端末保存:</strong> localStorage＋JSONバックアップ<br><strong>任意クラウド:</strong> Supabase Auth＋PostgreSQL<br><strong>ストア課金:</strong> RevenueCat＋Apple/Google Billing<br><strong>計算方式:</strong> 入力条件に基づく将来残高試算</p></article>
+        <article class="card"><h2>データとプライバシー</h2><p class="small" id="cloudPrivacyText">クラウド未設定・未ログイン時は、この端末のブラウザ保存領域だけを使用します。銀行・カード会社への直接接続はありません。</p><p class="small"><strong>バージョン:</strong> 0.8.7<br><strong>端末保存:</strong> localStorage＋JSONバックアップ<br><strong>任意クラウド:</strong> Supabase Auth＋PostgreSQL<br><strong>ストア課金:</strong> RevenueCat＋Apple/Google Billing<br><strong>計算方式:</strong> 入力条件に基づく将来残高試算</p></article>
         <article class="card"><h2>計算仕様</h2><details><summary>安全使用額</summary><p class="small">選択した通常使用口座から直ちに支出しても、次回入金直前までその口座が維持残高を下回らない最大額です。他口座の不足は別途警告します。</p></details><details><summary>同日順序</summary><p class="small">安全側に倒し、外部支出、振替出、振替入、外部収入の順で処理します。同日振替で引落を賄う設定には警告します。</p></details><details><summary>リボ・ローン</summary><p class="small">入力した元本、年率、日数基準、丸め、返済方式、遅延条件による日割り単利試算です。契約固有の処理は規約と照合してください。</p></details></article>
       </aside>
     </div>
   </section>
 
-  <footer class="app-footer"><div><strong>残高予報 v0.8.6</strong><div class="privacy" id="cloudFooterPrivacy">端末内モード。入力データは外部送信されません。</div></div><div class="privacy">本アプリは家計簿と資金繰りの試算ツールです。重要な支払いは金融機関・カード会社の公式明細と照合してください。<br><a href="privacy.html">プライバシー</a>・<a href="terms.html">利用規約</a>・<a href="delete-account.html">アカウント削除</a></div></footer>
+  <footer class="app-footer"><div><strong>残高予報 v0.8.7</strong><div class="privacy" id="cloudFooterPrivacy">端末内モード。入力データは外部送信されません。</div></div><div class="privacy">本アプリは家計簿と資金繰りの試算ツールです。重要な支払いは金融機関・カード会社の公式明細と照合してください。<br><a href="privacy.html">プライバシー</a>・<a href="terms.html">利用規約</a>・<a href="delete-account.html">アカウント削除</a></div></footer>
   <pre id="selfTestOutput" class="test-output hidden"></pre>
 </main>
 
@@ -229,6 +228,8 @@
 <div id="quickSheet" class="quick-sheet hidden" role="dialog" aria-modal="true" aria-label="追加メニュー"><div class="quick-sheet-panel"><h2>金額から追加</h2><label>金額<input id="v14SheetAmount" data-money type="number" min="0" inputmode="numeric" placeholder="0"/><div class="money-preview"></div></label><p class="small">種類を選ぶと詳細入力へ進みます。</p><button class="btn btn-primary" data-action="add-ledger-expense" type="button">支出</button><button class="btn" data-action="add-ledger-income" type="button">収入</button><button class="btn" data-action="add-card-expense" type="button">カード利用</button><button class="btn" data-action="open-transfer" type="button">出金・振替・チャージ</button><button class="btn close-sheet" data-action="close-quick-sheet" type="button">閉じる</button></div></div>
 <div id="toast" class="toast hidden" aria-live="polite"></div>
 
+<script src="./scripts/core-utils.js"></script>
+<script src="./scripts/japanese-calendar.js"></script>
 <script src="./scripts/app.js"></script>
 <script src="./scripts/ui-enhancements.js"></script>
 <script src="./cloud-config.js"></script>

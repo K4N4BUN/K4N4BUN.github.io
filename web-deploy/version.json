@@ -1,8 +1,8 @@
 {
-  "version": "0.8.6",
+  "version": "0.8.7",
   "releasedAt": "2026-07-23",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "巨大なindex.htmlからCSSとJavaScriptを分離し、UI拡張資産の固定バージョン名を廃止。",
-  "notes": "第1段階の構造リファクタリング。機能・保存データ形式は維持。"
+  "summary": "JavaScript分割の第2段階。共通ユーティリティと日本の祝日計算をapp.jsから分離。",
+  "notes": "保存データ形式と画面仕様は維持。依存順を明示し、再肥大化防止検査を追加。"
 }

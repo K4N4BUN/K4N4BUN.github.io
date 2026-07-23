@@ -1,5 +1,5 @@
 "use strict";
-const APP_VERSION = "0.8.6",
+const APP_VERSION = "0.8.7",
   STORAGE_KEY = "zandaka-yohou-v1",
   LEGACY_KEYS = [
     "zandaka-yohou-html-v5",
@@ -9,6 +9,12 @@ const APP_VERSION = "0.8.6",
   ];
 let storageAvailable = true;
 const memoryStorage = new Map();
+const {
+  deepClone, yen, dateFmt, fullDateFmt, uid, toISODate, todayISO,
+  parseISODate, isValidISODate, addDays, compareDates, sameDate, monthKey,
+  daysBetween, intMoney, num, clampDay, esc, isoNow, ageDays,
+} = window.ZYCore;
+const { japaneseHolidaySet } = window.ZYCalendar;
 function storageGet(key) {
   try {
     return localStorage.getItem(key);
@@ -35,199 +41,8 @@ function storageRemove(key) {
     storageAvailable = false;
   }
 }
-function deepClone(value) {
-  return typeof structuredClone === "function"
-    ? structuredClone(value)
-    : JSON.parse(JSON.stringify(value));
-}
-const yen = new Intl.NumberFormat("ja-JP", {
-  style: "currency",
-  currency: "JPY",
-  maximumFractionDigits: 0,
-});
-const dateFmt = new Intl.DateTimeFormat("ja-JP", {
-  month: "numeric",
-  day: "numeric",
-  weekday: "short",
-});
-const fullDateFmt = new Intl.DateTimeFormat("ja-JP", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  weekday: "short",
-});
-function uid() {
-  return globalThis.crypto?.randomUUID
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-function toISODate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-function todayISO() {
-  const d = new Date();
-  return toISODate(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
-}
-function parseISODate(v) {
-  const [y, m, d] = String(v).split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-function isValidISODate(v) {
-  if (typeof v !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v))
-    return false;
-  const d = parseISODate(v);
-  return Number.isFinite(d.getTime()) && toISODate(d) === v;
-}
-function addDays(d, n) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + Number(n || 0));
-  return x;
-}
-function compareDates(a, b) {
-  return a.getTime() - b.getTime();
-}
-function sameDate(a, b) {
-  return toISODate(a) === toISODate(b);
-}
-function monthKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-function daysBetween(a, b) {
-  return Math.max(0, Math.round((b - a) / 86400000));
-}
-function intMoney(v, f = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? Math.round(n) : f;
-}
-function num(v, f = 0) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : f;
-}
-function clampDay(y, m, d) {
-  return Math.max(
-    1,
-    Math.min(Math.trunc(Number(d)) || 1, new Date(y, m + 1, 0).getDate()),
-  );
-}
-function esc(v) {
-  return String(v ?? "").replace(
-    /[&<>'"]/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
-        c
-      ],
-  );
-}
 function accountName(id) {
   return state.accounts.find((a) => a.id === id)?.name || "未設定";
-}
-function isoNow() {
-  return new Date().toISOString();
-}
-function ageDays(iso) {
-  if (!iso) return 9999;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-}
-function nthWeekday(y, m, w, n) {
-  const first = new Date(y, m, 1),
-    delta = (w - first.getDay() + 7) % 7;
-  return new Date(y, m, 1 + delta + 7 * (n - 1));
-}
-function springEquinoxDay(y) {
-  return Math.floor(
-    20.8431 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4),
-  );
-}
-function autumnEquinoxDay(y) {
-  return Math.floor(
-    23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4),
-  );
-}
-const holidayCache = new Map();
-function japaneseHolidaySet(y) {
-  if (holidayCache.has(y)) return holidayCache.get(y);
-  const set = new Set(),
-    add = (m, d) => set.add(toISODate(new Date(y, m - 1, d)));
-  if (y === 2020) {
-    [
-      [1, 1],
-      [1, 13],
-      [2, 11],
-      [2, 23],
-      [3, 20],
-      [4, 29],
-      [5, 3],
-      [5, 4],
-      [5, 5],
-      [7, 23],
-      [7, 24],
-      [8, 10],
-      [9, 21],
-      [9, 22],
-      [11, 3],
-      [11, 23],
-    ].forEach((x) => add(...x));
-  } else if (y === 2021) {
-    [
-      [1, 1],
-      [1, 11],
-      [2, 11],
-      [2, 23],
-      [3, 20],
-      [4, 29],
-      [5, 3],
-      [5, 4],
-      [5, 5],
-      [7, 22],
-      [7, 23],
-      [8, 8],
-      [9, 20],
-      [9, 23],
-      [11, 3],
-      [11, 23],
-    ].forEach((x) => add(...x));
-  } else {
-    add(1, 1);
-    set.add(toISODate(nthWeekday(y, 0, 1, 2)));
-    add(2, 11);
-    if (y >= 2020) add(2, 23);
-    add(3, springEquinoxDay(y));
-    add(4, 29);
-    add(5, 3);
-    add(5, 4);
-    add(5, 5);
-    set.add(toISODate(nthWeekday(y, 6, 1, 3)));
-    if (y >= 2016) add(8, 11);
-    set.add(toISODate(nthWeekday(y, 8, 1, 3)));
-    add(9, autumnEquinoxDay(y));
-    set.add(toISODate(nthWeekday(y, 9, 1, 2)));
-    add(11, 3);
-    add(11, 23);
-    if (y >= 1989 && y <= 2018) add(12, 23);
-  }
-  if (y === 2019) {
-    add(4, 30);
-    add(5, 1);
-    add(5, 2);
-    add(10, 22);
-  }
-  for (let i = 1; i <= 366; i++) {
-    const d = new Date(y, 0, i);
-    if (d.getFullYear() !== y) break;
-    const k = toISODate(d);
-    if (set.has(k) || d.getDay() === 0) continue;
-    if (set.has(toISODate(addDays(d, -1))) && set.has(toISODate(addDays(d, 1))))
-      set.add(k);
-  }
-  for (const k of [...set].sort()) {
-    const d = parseISODate(k);
-    if (d.getDay() !== 0) continue;
-    let c = addDays(d, 1);
-    while (set.has(toISODate(c))) c = addDays(c, 1);
-    set.add(toISODate(c));
-  }
-  holidayCache.set(y, set);
-  return set;
 }
 const DEFAULT_HOUSEHOLD_CATEGORIES = [
   "食費",
@@ -2903,7 +2718,7 @@ function calendarDayData(date){const actual=state.ledgerEntries.filter(e=>e.date
 function renderCalendarDayDetail(){const el=document.getElementById("v14CalendarDayDetail"),date=ensureV14().selectedCalendarDate;if(!el||!date)return;const d=calendarDayData(date),rows=[...d.actual.map(e=>({name:e.name,amount:e.kind==="income"?e.amount:-e.amount,type:"実績"})),...d.events.map(e=>({name:e.name,amount:e.amount,type:"予定"}))];el.innerHTML=`<h3>${date}</h3><div class="v14-kpi-grid"><div class="v14-kpi">実績支出<strong>${yen.format(d.expense)}</strong></div><div class="v14-kpi">実績収入<strong>${yen.format(d.income)}</strong></div><div class="v14-kpi">予定差引<strong>${yen.format(d.planned)}</strong></div></div><div class="v14-day-modal-list">${rows.length?rows.map(r=>`<div class="v14-day-modal-row"><span>${r.type}・${esc(r.name)}</span><strong class="${r.amount<0?"negative":"positive"}">${r.amount>=0?"＋":"－"}${yen.format(Math.abs(r.amount))}</strong></div>`).join(""):"<p class='small'>取引はありません。</p>"}</div>`;}
 const renderCalendarV13ForV14=renderCalendar;renderCalendar=function(){renderCalendarV13ForV14();const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth(),start=new Date(y,m,1),gridStart=addDays(start,-start.getDay()),days=[...document.querySelectorAll("#calendarGrid .day")];days.forEach((el,i)=>{const d=addDays(gridStart,i),date=toISODate(d),x=calendarDayData(date);el.dataset.date=date;const summary=document.createElement("div");summary.className="v14-calendar-total";summary.innerHTML=`${x.expense?`<span class="negative">実績 -${yen.format(x.expense)}</span><br>`:""}${x.planned?`予定 ${x.planned>=0?"+":"-"}${yen.format(Math.abs(x.planned))}`:""}`;el.appendChild(summary);el.tabIndex=0;el.setAttribute("role","button");el.onclick=()=>{ensureV14().selectedCalendarDate=date;renderCalendarDayDetail();};el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();el.click();}};});renderCalendarDayDetail();};
 
-function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.8.6・更新未検出";}
+function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.8.7・更新未検出";}
 const renderSettingsV13ForV14=renderSettings;renderSettings=function(){renderSettingsV13ForV14();renderV14Settings();};
 
 /* ledger modal: subcategory + sale date + closed month protection + undo */

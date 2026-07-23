@@ -1,5 +1,5 @@
 "use strict";
-const CACHE_NAME="zandaka-yohou-v0-8-6";
+const CACHE_NAME="zandaka-yohou-v0-8-7";
 const APP_SHELL=[
   "./","./index.html","./manifest.json","./version.json",
   "./styles/app.css","./styles/ui-enhancements.css","./scripts/app.js","./scripts/ui-enhancements.js","./features.css","./src/features.js","./src/core/analytics.js","./src/core/crypto.js","./src/native/security.js","./src/native/notifications.js","./cloud.css","./cloud-config.js","./cloud.js","./billing.css","./billing-config.js","./legal.css",
