@@ -1,8 +1,8 @@
 {
-  "version": "0.8.2",
+  "version": "0.8.3",
   "releasedAt": "2026-07-22",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "取引入力の必須検証と重複登録防止を追加。",
-  "notes": "金額・日付・内容・支払元を保存前に検証し、同額・近接日・同一支払元・類似名称の重複候補を警告。"
+  "summary": "表示バージョン不整合を修正し、実装報告へ残りの改善予定を追加。",
+  "notes": "設定画面、フッター、更新状態、クラウド識別、デザイン識別、Web/Android/iOSの表示を0.8.3へ統一。"
 }
