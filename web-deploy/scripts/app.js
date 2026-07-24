@@ -1,5 +1,5 @@
 "use strict";
-const APP_VERSION = "0.8.8",
+const APP_VERSION = "0.9.0",
   STORAGE_KEY = "zandaka-yohou-v1",
   RECOVERY_KEYS = [
     "zandaka-yohou-recovery-update",
@@ -2785,7 +2785,7 @@ function calendarDayData(date){const actual=state.ledgerEntries.filter(e=>e.date
 function renderCalendarDayDetail(){const el=document.getElementById("v14CalendarDayDetail"),date=ensureV14().selectedCalendarDate;if(!el||!date)return;const d=calendarDayData(date),rows=[...d.actual.map(e=>({name:e.name,amount:e.kind==="income"?e.amount:-e.amount,type:"実績"})),...d.events.map(e=>({name:e.name,amount:e.amount,type:"予定"}))];el.innerHTML=`<h3>${date}</h3><div class="v14-kpi-grid"><div class="v14-kpi">実績支出<strong>${yen.format(d.expense)}</strong></div><div class="v14-kpi">実績収入<strong>${yen.format(d.income)}</strong></div><div class="v14-kpi">予定差引<strong>${yen.format(d.planned)}</strong></div></div><div class="v14-day-modal-list">${rows.length?rows.map(r=>`<div class="v14-day-modal-row"><span>${r.type}・${esc(r.name)}</span><strong class="${r.amount<0?"negative":"positive"}">${r.amount>=0?"＋":"－"}${yen.format(Math.abs(r.amount))}</strong></div>`).join(""):"<p class='small'>取引はありません。</p>"}</div>`;}
 const renderCalendarV13ForV14=renderCalendar;renderCalendar=function(){renderCalendarV13ForV14();const y=calendarCursor.getFullYear(),m=calendarCursor.getMonth(),start=new Date(y,m,1),gridStart=addDays(start,-start.getDay()),days=[...document.querySelectorAll("#calendarGrid .day")];days.forEach((el,i)=>{const d=addDays(gridStart,i),date=toISODate(d),x=calendarDayData(date);el.dataset.date=date;const summary=document.createElement("div");summary.className="v14-calendar-total";summary.innerHTML=`${x.expense?`<span class="negative">実績 -${yen.format(x.expense)}</span><br>`:""}${x.planned?`予定 ${x.planned>=0?"+":"-"}${yen.format(Math.abs(x.planned))}`:""}`;el.appendChild(summary);el.tabIndex=0;el.setAttribute("role","button");el.onclick=()=>{ensureV14().selectedCalendarDate=date;renderCalendarDayDetail();};el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();el.click();}};});renderCalendarDayDetail();};
 
-function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.8.8・更新未検出";}
+function renderV14Settings(){const v=ensureV14();const undo=document.getElementById("v14UndoStatus");if(undo)undo.textContent=v.undoStack.length?`直前：${v.undoStack[0].label}（${new Date(v.undoStack[0].createdAt).toLocaleString("ja-JP")}）・最大5操作`:`元に戻せる操作はありません。`;const subs=document.getElementById("v14SubcategoryList");if(subs)subs.innerHTML=Object.entries(v.subcategories).flatMap(([p,arr])=>(arr||[]).map(s=>`<div class="list-row"><div><strong>${esc(p)}</strong><div class="list-meta">${esc(s)}</div></div><div><button class="btn btn-small" data-action="v14-edit-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subcategory:${encodeURIComponent(p)}|${encodeURIComponent(s)}" type="button">削除</button></div></div>`)).join("")||"<p class='small'>サブカテゴリはありません。</p>";const rules=document.getElementById("v14MerchantRuleList");if(rules)rules.innerHTML=Object.entries(ensureV13().merchantRules).map(([k,r])=>`<div class="list-row"><div><strong>${esc(k)}</strong><div class="list-meta">${esc(r.category||"未指定")}・${esc(paymentMethodLabelV13(r.paymentMethod))}</div></div><div><button class="btn btn-small" data-action="v14-edit-merchant:${encodeURIComponent(k)}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-merchant:${encodeURIComponent(k)}" type="button">削除</button></div></div>`).join("")||"<p class='small'>ルールはありません。</p>";const subList=document.getElementById("v14SubscriptionList");if(subList)subList.innerHTML=v.subscriptions.length?v.subscriptions.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)).map(s=>`<div class="list-row"><div><strong>${esc(s.name)}</strong><div class="list-meta">${s.cycle==="annual"?"年額":"月額"} ${yen.format(s.amount)}・次回 ${s.nextDate}${s.freeUntil?`・無料終了 ${s.freeUntil}`:""}</div></div><div><button class="btn btn-small" data-action="v14-edit-subscription:${s.id}" type="button">編集</button><button class="btn btn-small btn-danger" data-action="v14-delete-subscription:${s.id}" type="button">削除</button></div></div>`).join(""):"<p class='small'>定期購読はありません。</p>";const close=document.getElementById("v14MonthCloseStatus"),mk=state.household.selectedMonth,c=v.monthlyCloses[mk];if(close)close.innerHTML=c?`<span class="pill ok">締め済み</span> ${new Date(c.closedAt).toLocaleString("ja-JP")}・残高${Object.keys(c.balances||{}).length}件`:`未締めです。`;const dash=document.getElementById("v14DashboardSettings");if(dash)dash.innerHTML=Object.entries(V14_DASHBOARD_METRICS).map(([id,label])=>`<label class="form-check"><input class="form-check-input" data-v14-dashboard="${id}" type="checkbox" ${v.dashboard.visible.includes(id)?"checked":""}><span class="form-check-label">${esc(label)}</span></label>`).join("");const upd=document.getElementById("v14UpdateStatus");if(upd)upd.textContent=v.update.available?"新しいバージョンを適用できます。":"現在のバージョン 0.9.0・更新未検出";}
 const renderSettingsV13ForV14=renderSettings;renderSettings=function(){renderSettingsV13ForV14();renderV14Settings();};
 
 /* ledger modal: subcategory + sale date + closed month protection + undo */
@@ -3015,6 +3015,182 @@ openLedgerModal=function(entryId="",kind="expense",forcePayment=""){
   };
 };
 /* ===== end v0.8.2 extension ===== */
+
+
+/* ===== v0.9.0 mobile modal and payment-source semantics ===== */
+const applyLedgerSourceUiV089Previous = applyLedgerSourceUi;
+applyLedgerSourceUi = function(){
+  const payment=document.getElementById("ledgerPayment"),source=document.getElementById("ledgerSource"),affects=document.getElementById("ledgerAffects"),note=document.getElementById("ledgerAutoNote");
+  if(!payment||!source)return;
+  const pm=payment.value,selected=source.dataset.selected||source.value||"";
+  if(pm==="credit"){
+    source.innerHTML=cardOptions(selected);
+    affects.checked=false;affects.disabled=true;
+    if(note)note.textContent="クレジットカードは利用日に保有残高を減らさず、未払額と将来の引落へ反映します。";
+  }else{
+    const types=pm==="cash"?["cash"]:pm==="emoney"?["emoney"]:pm==="bank"||pm==="debit"?["bank"]:[];
+    const allowUntracked=pm==="cash"||pm==="other";
+    const emptyOption=allowUntracked?'<option value="">残高を管理しない（支出記録のみ）</option>':'';
+    source.innerHTML=emptyOption+accountOptionsByType(selected,types);
+    if(selected&&[...source.options].some(o=>o.value===selected))source.value=selected;
+    const untracked=allowUntracked&&!source.value;
+    affects.disabled=false;
+    if(untracked)affects.checked=false;
+    else if(!source.dataset.keepAffects)affects.checked=true;
+    if(note)note.textContent=untracked
+      ?"この取引は家計簿へ記録しますが、財布・口座・電子マネーの残高は動かしません。"
+      :pm==="cash"?"選択した財布・現金残高を直ちに増減します。"
+      :pm==="emoney"?"選択した電子マネー残高を直ちに増減します。"
+      :"選択した保有先を直ちに増減します。";
+  }
+  source.dataset.selected="";
+  source.dataset.keepAffects="";
+};
+
+const zyValidateLedgerDraftV089Previous = zyValidateLedgerDraft;
+zyValidateLedgerDraft = function(){
+  const result=zyValidateLedgerDraftV089Previous();
+  const pm=result.pm,source=result.source,affects=Boolean(document.getElementById("ledgerAffects")?.checked);
+  if(!source&&(pm==="cash"||pm==="other")&&!affects){
+    result.errors=result.errors.filter(x=>x!=="有効な支払元口座を選択してください。");
+  }
+  return result;
+};
+
+function zyLedgerInlineCreator(){
+  const source=document.getElementById("ledgerSource"),payment=document.getElementById("ledgerPayment");
+  if(!source||!payment||document.getElementById("ledgerCreateSource"))return;
+  const label=source.closest("label");
+  if(label){
+    for(const node of label.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim()){node.textContent="残高を動かす保有先 ";break;}}
+  }
+  const paymentLabel=payment.closest("label");
+  if(paymentLabel){
+    for(const node of paymentLabel.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim()){node.textContent="決済手段 ";break;}}
+  }
+  const controls=document.createElement("div");
+  controls.className="ledger-source-actions";
+  controls.innerHTML='<button class="btn btn-small" id="ledgerCreateSource" type="button">＋この画面で保有先を作成</button><div id="ledgerSourceCreator" class="ledger-source-creator hidden"></div>';
+  label?.after(controls);
+  const button=controls.querySelector("#ledgerCreateSource"),box=controls.querySelector("#ledgerSourceCreator");
+  const renderCreator=()=>{
+    const pm=payment.value,isCard=pm==="credit",defaultType=pm==="cash"?"cash":pm==="emoney"?"emoney":"bank";
+    const bankOptions=accountOptionsByType(state.defaultAccountId,["bank"]);
+    box.innerHTML=isCard
+      ?`<div class="form-grid"><label>カード名<input id="ledgerNewSourceName" value="新しいカード"/></label><label>引落口座<select id="ledgerNewCardAccount">${bankOptions}</select></label><label>締め日<input id="ledgerNewClosingDay" type="number" min="1" max="31" value="31"/></label><label>支払日<input id="ledgerNewPaymentDay" type="number" min="1" max="31" value="27"/></label></div><button class="btn btn-primary btn-small" id="ledgerConfirmCreateSource" type="button">カードを作成して選択</button>`
+      :`<div class="form-grid"><label>保有先名<input id="ledgerNewSourceName" value="${defaultType==="cash"?"財布":defaultType==="emoney"?"電子マネー":"新しい銀行口座"}"/></label><label>種類<select id="ledgerNewSourceType" ${pm!=="other"?"disabled":""}><option value="bank" ${defaultType==="bank"?"selected":""}>銀行口座</option><option value="cash" ${defaultType==="cash"?"selected":""}>現金・財布</option><option value="emoney" ${defaultType==="emoney"?"selected":""}>電子マネー</option></select></label><label>現在残高<input id="ledgerNewSourceBalance" data-money type="number" step="1" value="0"/><div class="money-preview"></div></label></div><button class="btn btn-primary btn-small" id="ledgerConfirmCreateSource" type="button">保有先を作成して選択</button>`;
+    bindMoneyPreviews();
+    box.querySelector("#ledgerConfirmCreateSource").onclick=()=>{
+      const name=String(document.getElementById("ledgerNewSourceName")?.value||"").trim();
+      if(!name)return showToast(isCard?"カード名を入力してください":"保有先名を入力してください");
+      let id="";
+      if(isCard){
+        const accountId=document.getElementById("ledgerNewCardAccount")?.value||"";
+        if(!accountId)return showToast("先に引落用の銀行口座を作成してください");
+        const card=sanitizeV13Card({name,accountId,closingDay:document.getElementById("ledgerNewClosingDay")?.value,paymentDay:document.getElementById("ledgerNewPaymentDay")?.value,paymentMonthOffset:1,active:true});
+        ensureV13().cards.push(card);id=card.id;
+      }else{
+        const type=document.getElementById("ledgerNewSourceType")?.value||defaultType;
+        const account=sanitizeAccount({name,balance:document.getElementById("ledgerNewSourceBalance")?.value,buffer:0,lastConfirmedAt:isoNow()});
+        state.accounts.push(account);ensureV13().assetMeta[account.id]={type};id=account.id;
+        if(!state.defaultAccountId)state.defaultAccountId=id;
+      }
+      source.dataset.selected=id;source.dataset.keepAffects="1";applyLedgerSourceUi();
+      box.classList.add("hidden");button.textContent="＋この画面で保有先を作成";
+      showToast(`${name}を作成しました`);
+    };
+  };
+  button.onclick=()=>{const opening=box.classList.contains("hidden");box.classList.toggle("hidden");button.textContent=opening?"作成欄を閉じる":"＋この画面で保有先を作成";if(opening)renderCreator();};
+  payment.addEventListener("change",()=>{box.classList.add("hidden");button.textContent="＋この画面で保有先を作成";});
+  source.addEventListener("change",()=>{source.dataset.keepAffects="1";applyLedgerSourceUi();});
+}
+
+const openLedgerModalV089Previous = openLedgerModal;
+openLedgerModal = function(entryId="",kind="expense",forcePayment=""){
+  openLedgerModalV089Previous(entryId,kind,forcePayment);
+  const panel=document.querySelector("#modal .modal-panel");
+  if(panel)panel.classList.add("ledger-entry-panel");
+  zyLedgerInlineCreator();
+};
+/* ===== end v0.9.0 extension ===== */
+
+
+/* ===== v0.9.0 asset-first transaction input ===== */
+function zyV090PaymentForSource(sourceId, kind="expense"){
+  if(cardById(sourceId))return "credit";
+  const type=assetType(sourceId);
+  if(type==="cash")return "cash";
+  if(type==="emoney")return "emoney";
+  if(type==="bank")return "bank";
+  return kind==="income"?"bank":"cash";
+}
+function zyV090UnifiedSourceOptions(selected="",kind="expense"){
+  const untracked='<option value="">残高を管理しない（記録のみ）</option>';
+  const accounts=state.accounts.filter(a=>a.active!==false).map(a=>`<option value="${a.id}" ${a.id===selected?"selected":""}>${esc(a.name)}（${esc(assetTypeLabel(a.id))}）</option>`).join("");
+  const cards=ensureV13().cards.filter(c=>c.active!==false).map(c=>`<option value="${c.id}" ${c.id===selected?"selected":""}>${esc(c.name)}（クレジットカード）</option>`).join("");
+  return untracked+accounts+cards;
+}
+const applyLedgerSourceUiV090Previous=applyLedgerSourceUi;
+applyLedgerSourceUi=function(){
+  const panel=document.querySelector("#modal .ledger-entry-panel.asset-first-entry"),payment=document.getElementById("ledgerPayment"),source=document.getElementById("ledgerSource"),affects=document.getElementById("ledgerAffects"),note=document.getElementById("ledgerAutoNote"),kind=document.getElementById("ledgerKind")?.value||"expense";
+  if(!panel||!payment||!source)return applyLedgerSourceUiV090Previous();
+  const requested=source.dataset.selected||source.value||"";
+  source.innerHTML=zyV090UnifiedSourceOptions(requested,kind);
+  if(requested&&[...source.options].some(o=>o.value===requested))source.value=requested;
+  const selected=source.value;
+  if(selected){
+    payment.value=zyV090PaymentForSource(selected,kind);
+    const isCredit=Boolean(cardById(selected));
+    affects.disabled=isCredit;
+    affects.checked=!isCredit;
+    if(note)note.textContent=isCredit
+      ?"カード利用として記録し、利用日には保有残高を減らさず、未払額と将来の引落へ反映します。"
+      :`${accountName(selected)}から${kind==="income"?"入金":"支出"}として残高へ反映します。決済手段は保有先の種類から自動判定しました。`;
+  }else{
+    payment.value=kind==="income"?"other":"cash";
+    affects.disabled=false;affects.checked=false;
+    if(note)note.textContent="家計簿へ記録しますが、登録済みの財布・口座・電子マネー残高は動かしません。";
+  }
+  source.dataset.selected="";
+  source.dataset.keepAffects="1";
+};
+function zyV090SourcePrompt(){
+  const kind=document.getElementById("ledgerKind")?.value||"expense";
+  return kind==="income"?"どこへ入った？":kind==="settlement"?"どこから決済した？":"どこから払った？";
+}
+function zyV090InstallCreator(){
+  const source=document.getElementById("ledgerSource");if(!source)return;
+  document.querySelector("#modal .ledger-source-actions")?.remove();
+  const controls=document.createElement("div");controls.className="ledger-source-actions asset-first-creator";
+  controls.innerHTML='<button class="btn btn-small" id="ledgerCreateSource" type="button">＋保有先を追加</button><div id="ledgerSourceCreator" class="ledger-source-creator hidden"></div>';
+  source.closest("label")?.after(controls);
+  const button=controls.querySelector("#ledgerCreateSource"),box=controls.querySelector("#ledgerSourceCreator");
+  const draw=()=>{box.innerHTML=`<div class="form-grid"><label>種類<select id="ledgerNewSourceType"><option value="cash">現金・財布</option><option value="bank">銀行口座</option><option value="emoney">電子マネー</option><option value="credit">クレジットカード</option></select></label><label>名前<input id="ledgerNewSourceName" value="財布"/></label><label id="ledgerNewBalanceLabel">現在残高<input id="ledgerNewSourceBalance" data-money type="number" step="1" value="0"/><div class="money-preview"></div></label><label id="ledgerNewCardAccountLabel" class="hidden">引落口座<select id="ledgerNewCardAccount">${accountOptionsByType(state.defaultAccountId,["bank"])}</select></label><label id="ledgerNewClosingLabel" class="hidden">締め日<input id="ledgerNewClosingDay" type="number" min="1" max="31" value="31"/></label><label id="ledgerNewPaymentLabel" class="hidden">支払日<input id="ledgerNewPaymentDay" type="number" min="1" max="31" value="27"/></label></div><button class="btn btn-primary btn-small" id="ledgerConfirmCreateSource" type="button">作成して選択</button>`;bindMoneyPreviews();
+    const type=box.querySelector("#ledgerNewSourceType"),name=box.querySelector("#ledgerNewSourceName");
+    const sync=()=>{const v=type.value,isCard=v==="credit";box.querySelector("#ledgerNewBalanceLabel").classList.toggle("hidden",isCard);box.querySelector("#ledgerNewCardAccountLabel").classList.toggle("hidden",!isCard);box.querySelector("#ledgerNewClosingLabel").classList.toggle("hidden",!isCard);box.querySelector("#ledgerNewPaymentLabel").classList.toggle("hidden",!isCard);name.value=({cash:"財布",bank:"新しい銀行口座",emoney:"電子マネー",credit:"新しいカード"})[v];};type.onchange=sync;sync();
+    box.querySelector("#ledgerConfirmCreateSource").onclick=()=>{const v=type.value,label=String(name.value||"").trim();if(!label)return showToast("名前を入力してください");let id="";if(v==="credit"){const accountId=box.querySelector("#ledgerNewCardAccount")?.value||"";if(!accountId)return showToast("先に引落用の銀行口座を作成してください");const card=sanitizeV13Card({name:label,accountId,closingDay:box.querySelector("#ledgerNewClosingDay")?.value,paymentDay:box.querySelector("#ledgerNewPaymentDay")?.value,paymentMonthOffset:1,active:true});ensureV13().cards.push(card);id=card.id;}else{const account=sanitizeAccount({name:label,balance:box.querySelector("#ledgerNewSourceBalance")?.value,buffer:0,lastConfirmedAt:isoNow()});state.accounts.push(account);ensureV13().assetMeta[account.id]={type:v};id=account.id;if(!state.defaultAccountId)state.defaultAccountId=id;}source.dataset.selected=id;applyLedgerSourceUi();box.classList.add("hidden");button.textContent="＋保有先を追加";showToast(`${label}を作成しました`);};
+  };
+  button.onclick=()=>{const opening=box.classList.contains("hidden");box.classList.toggle("hidden");button.textContent=opening?"追加欄を閉じる":"＋保有先を追加";if(opening)draw();};
+}
+function zyV090EnhanceLedgerModal(){
+  const panel=document.querySelector("#modal .ledger-entry-panel"),source=document.getElementById("ledgerSource"),payment=document.getElementById("ledgerPayment"),kind=document.getElementById("ledgerKind"),details=document.querySelector("#modalBody details.advanced .form-grid");if(!panel||!source||!payment)return;
+  panel.classList.add("asset-first-entry");
+  const sourceLabel=source.closest("label"),paymentLabel=payment.closest("label");
+  if(sourceLabel){for(const node of sourceLabel.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim()){node.textContent=zyV090SourcePrompt()+" ";break;}}sourceLabel.classList.add("asset-first-source");}
+  if(paymentLabel&&details){for(const node of paymentLabel.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim()){node.textContent="決済手段（自動判定・変更可） ";break;}}paymentLabel.classList.add("asset-first-payment-detail");details.appendChild(paymentLabel);}
+  const intro=document.createElement("div");intro.className="inline-note asset-first-intro";intro.textContent="通常は保有先を選ぶだけで、決済手段と残高反映を自動設定します。必要な場合だけ「詳細設定」を開いて変更できます。";sourceLabel?.before(intro);
+  zyV090InstallCreator();
+  source.addEventListener("change",()=>{source.dataset.selected=source.value;applyLedgerSourceUi();});
+  kind?.addEventListener("change",()=>{if(sourceLabel){for(const node of sourceLabel.childNodes){if(node.nodeType===Node.TEXT_NODE&&node.textContent.trim()){node.textContent=zyV090SourcePrompt()+" ";break;}}}source.dataset.selected=source.value;applyLedgerSourceUi();});
+  payment.addEventListener("change",()=>{const selected=source.value;if(selected&&payment.value!==zyV090PaymentForSource(selected,kind?.value||"expense")){if(payment.value==="credit"){const first=ensureV13().cards.find(c=>c.active!==false);if(first)source.dataset.selected=first.id;}else{const types=payment.value==="cash"?["cash"]:payment.value==="emoney"?["emoney"]:["bank"],first=activeAssets().find(a=>types.includes(assetType(a.id)));if(first)source.dataset.selected=first.id;}applyLedgerSourceUi();}});
+  source.dataset.selected=source.dataset.selected||source.value||"";applyLedgerSourceUi();
+}
+const openLedgerModalV090Previous=openLedgerModal;
+openLedgerModal=function(entryId="",kind="expense",forcePayment=""){
+  openLedgerModalV090Previous(entryId,kind,forcePayment);
+  zyV090EnhanceLedgerModal();
+};
+/* ===== end v0.9.0 asset-first transaction input ===== */
 
 
 window.__ZY_TEST__ = {

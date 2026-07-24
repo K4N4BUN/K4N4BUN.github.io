@@ -1,8 +1,8 @@
 {
-  "version": "0.8.8",
-  "releasedAt": "2026-07-23",
+  "version": "0.9.0",
+  "releasedAt": "2026-07-24",
   "requiresMigration": false,
   "minimumDataSchema": 8,
-  "summary": "JavaScript分割の第2段階。共通ユーティリティと日本の祝日計算をapp.jsから分離。",
-  "notes": "保存データ形式と画面仕様は維持。依存順を明示し、再肥大化防止検査を追加。"
+  "summary": "保有先中心の取引入力へ移行。通常入力では保有先から決済手段と残高反映を自動判定。",
+  "notes": "既存保存データ形式と保存キーは変更せず、詳細設定で決済手段を個別変更可能。"
 }
